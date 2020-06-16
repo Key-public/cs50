@@ -112,16 +112,37 @@ def logout():
 @app.route("/quote", methods=["GET", "POST"])
 @login_required
 def quote():
-    """Get stock quote."""
-    return apology("TODO")
-
+    if request.method == "POST":
+        result = lookup(request.form.get("symbol"))
+        name = result["name"]
+        symbol = result["symbol"]
+        price = result["price"]
+        return render_template("quoted.html", name=name, symbol=symbol, price=usd(price))
+    else:
+        return render_template("quote.html")
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    if request.method == "GET":
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+        confirmation = request.form.get("confirmation")
+        """Render an apology if the user’s input is blank or the username already exists."""
+        if not username:
+            return apology("must provide name", 403)
+        """Render an apology if either input is blank or the passwords do not match"""
+        if not password:
+            return apology("must provide password", 403)
+        if confirmation != password:
+            return apology("must confirm password", 403)
+        if not db.execute("select username from users where username = :username", username=username):
+            db.execute("insert into users (username, hash, cash) values (:username, :hash, 10000)", username=username, hash=generate_password_hash(password))
+            return login()
+        else:
+            return apology("name is already taken", 403)
+    else:
         return render_template("register.html")
-    """Register user"""
-    return apology("TODO")
+
 
 
 @app.route("/sell", methods=["GET", "POST"])
