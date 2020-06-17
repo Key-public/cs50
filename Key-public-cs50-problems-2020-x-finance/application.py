@@ -51,7 +51,27 @@ def index():
 @login_required
 def buy():
     """Buy shares of stock"""
-    return apology("TODO")
+    if request.method == "POST":
+        shares = request.form.get("shares")
+        result = lookup(request.form.get("symbol"))
+        user_id = session.get("user_id")
+        company_name = result["name"]
+        symbol = result["symbol"]
+        price = result["price"]
+        if not result:
+            return render_template("buy.html", message="Sorry, there is no symbol like that")
+        else:
+            have_cash = db.execute("select cash from users where id = :id", id=user_id)
+            have_cash = have_cash[0]["cash"]
+            need_cash = result["price"] * float(shares)
+            if have_cash >= need_cash: # тут ошибка, нужно понять в каком виде возвращаются данные have_cash из базы
+                db.execute("insert into deals (user_id, symbol, company_name, shares, share_price, total_price) VALUES (:user, :symbol, :company_name, :shares, :price, :total)", user=user_id, symbol=symbol, company_name=company_name, shares=shares, price=price, total=need_cash)
+                db.execute("update users set cash = :new_cash where id = :user", new_cash = have_cash - need_cash, user=user_id)
+                return render_template("buy.html", message="Congratulation!")
+            else:
+                return render_template("buy.html", message="Sorry, you don't have enough cash for this deal")
+    else:
+        return render_template("buy.html")
 
 
 @app.route("/history")
@@ -114,10 +134,13 @@ def logout():
 def quote():
     if request.method == "POST":
         result = lookup(request.form.get("symbol"))
-        name = result["name"]
-        symbol = result["symbol"]
-        price = result["price"]
-        return render_template("quoted.html", name=name, symbol=symbol, price=usd(price))
+        if not result:
+            return render_template("quote.html", message="Sorry, there is no symbol like that")
+        else:
+            name = result["name"]
+            symbol = result["symbol"]
+            price = result["price"]
+            return render_template("quoted.html", name=name, symbol=symbol, price=usd(price))
     else:
         return render_template("quote.html")
 
@@ -136,7 +159,7 @@ def register():
         if confirmation != password:
             return apology("must confirm password", 403)
         if not db.execute("select username from users where username = :username", username=username):
-            db.execute("insert into users (username, hash, cash) values (:username, :hash, 10000)", username=username, hash=generate_password_hash(password))
+            db.execute("insert into users (username, hash, cash) values (:username, :hash)", username=username, hash=generate_password_hash(password))
             return login()
         else:
             return apology("name is already taken", 403)

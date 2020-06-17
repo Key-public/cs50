@@ -2,3 +2,13 @@ cs50
 Flask
 Flask-Session
 requests
+
+CREATE TABLE IF NOT EXISTS deals
+    (id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date TEXT DEFAULT CURRENT_TIMESTAMP,
+    user_id INTEGER,
+    symbol TEXT,
+    company_name TEXT,
+    shares INTEGER,
+    share_price REAL,
+    total_price REAL);

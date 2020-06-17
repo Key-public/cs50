@@ -5,10 +5,17 @@
 {% endblock %}
 
 {% block main %}
-    <form action="/quote" method="post">
-        <div class="form-group">
-            <input autocomplete="off" autofocus class="form-control" name="symbol" placeholder="Stock’s symbol" type="text">
+    {% if message: %}
+        {{ message }}
+        <div>
+            <p><a href = "/quote">Ok, refresh page</a></p>
         </div>
-        <button class="btn btn-primary" type="submit">Quote</button>
-    </form>
+    {% else: %}
+        <form action="/quote" method="post">
+            <div class="form-group">
+                <input autocomplete="off" autofocus class="form-control" name="symbol" placeholder="Stock’s symbol" type="text">
+            </div>
+            <button class="btn btn-primary" type="submit">Quote</button>
+        </form>
+    {% endif %}
 {% endblock %}
