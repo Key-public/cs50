@@ -44,7 +44,18 @@ if not os.environ.get("API_KEY"):
 @login_required
 def index():
     """Show portfolio of stocks"""
-    return apology("TODO")
+    user_id = session.get("user_id")
+    shares = db.execute("select symbol, company_name, sum(shares) as shares from deals where user_id = :user_id group by symbol", user_id=user_id)
+    cash = db.execute("select cash from users where id = :user_id", user_id=user_id)
+    cash = cash[0]["cash"]
+    total = cash
+    for share in shares:
+        share_prices = lookup(share["symbol"])
+        share_prices = share_prices["price"]
+        share.update({"share_price" : share_prices, "total_price" : share_prices * share["shares"]})
+        total = total + share["total_price"]
+        share["share_price"], share["total_price"] = usd(share["share_price"]), usd(share["total_price"])
+    return render_template("index.html", cash=usd(cash), total=usd(total), shares=shares)
 
 
 @app.route("/buy", methods=["GET", "POST"])

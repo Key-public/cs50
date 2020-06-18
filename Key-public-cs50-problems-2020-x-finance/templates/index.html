@@ -1,0 +1,66 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Log In
+{% endblock %}
+
+{% block main %}
+    <table class = "table table-striped">
+        <thead>
+            <tr>
+                <th>
+                    Symbol
+                </th>
+                <th>
+                    Name
+                </th>
+                <th>
+                    Shares
+                </th>
+                <th>
+                    Price
+                </th>
+                <th>
+                    TOTAL
+                </th>
+            </tr>
+        </thead>
+        {% for share in shares: %}
+            <tr>
+                <td>
+                    {{ share["symbol"] }}
+                </td>
+                <td>
+                    {{ share["company_name"] }}
+                </td>
+                <td>
+                    {{ share["shares"] }}
+                </td>
+                <td>
+                    {{ share["share_price"] }}
+                </td>
+                <td>
+                    {{ share["total_price"] }}
+                </td>
+            </tr>
+        {% endfor %}
+        <tr>
+            <td colspan=4>
+                CASH
+            </td>
+            <td>
+                {{ total }}
+            </td>
+        </tr>
+        <tfoot>
+            <tr>
+                <td colspan=4>
+
+                </td>
+                <td>
+                    {{ total }}
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+{% endblock %}
