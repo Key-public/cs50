@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Sell
+{% endblock %}
+
+{% block main %}
+    {% if message: %}
+        {{ message }}
+        <div>
+            <p><a href = "/sell">Ok, refresh page</a></p>
+        </div>
+    {% else: %}
+        <form action="/sell" method="post">
+            <div class="form-group">
+                <select autocomplete="off" autofocus class="form-control" name="symbol">
+                    <option disabled selected value>Choose a stock</option>
+                    {% for have_symbol in have_symbols: %}
+                        <option>{{ have_symbol["symbol"] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div calss="form-group">
+                <input autocomplete="off" autofocus class="form-control" name="shares" placeholder="# of shares to sell" type="integer">
+            </div>
+            <button class="btn btn-primary" type="submit">Sell</button>
+        </form>
+    {% endif %}
+{% endblock %}

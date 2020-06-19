@@ -75,7 +75,7 @@ def buy():
             have_cash = db.execute("select cash from users where id = :id", id=user_id)
             have_cash = have_cash[0]["cash"]
             need_cash = result["price"] * float(shares)
-            if have_cash >= need_cash: # тут ошибка, нужно понять в каком виде возвращаются данные have_cash из базы
+            if have_cash >= need_cash:
                 db.execute("insert into deals (user_id, symbol, company_name, shares, share_price, total_price) VALUES (:user, :symbol, :company_name, :shares, :price, :total)", user=user_id, symbol=symbol, company_name=company_name, shares=shares, price=price, total=need_cash)
                 db.execute("update users set cash = :new_cash where id = :user", new_cash = have_cash - need_cash, user=user_id)
                 return render_template("buy.html", message="Congratulation!")
@@ -183,7 +183,26 @@ def register():
 @login_required
 def sell():
     """Sell shares of stock"""
-    return apology("TODO")
+    user_id = session.get("user_id")
+    if request.method == "POST":
+        symbol = request.form.get("symbol")
+        shares = request.form.get("shares")
+        if not symbol or not shares:
+            return apology("You have to choose at least 1 stock")
+        shares = int(shares)
+        have_shares = db.execute("select sum(shares) as shares from deals where user_id=:user_id and symbol=:symbol", user_id=user_id, symbol=symbol)[0]["shares"]
+        if shares > have_shares:
+            return apology("You've tried to sell more than you have")
+        parsed_share_info = lookup(symbol)
+        total_income = float(shares) * parsed_share_info["price"]
+        db.execute("insert into deals (user_id, symbol, company_name, shares, share_price, total_price) VALUES (:user_id, :symbol, :company_name, :shares, :price, :total_income)", user_id=user_id, symbol=parsed_share_info["symbol"], company_name=parsed_share_info["name"], shares=-shares, price=parsed_share_info["price"], total_income=total_income)
+        cash = db.execute("select cash from users where id=:user_id", user_id=user_id)[0]["cash"]
+        new_cash = cash + total_income
+        db.execute("update users set cash=:new_cash where id=:user_id", new_cash=new_cash, user_id=user_id)
+        return render_template("sell.html", message="Ok")
+    else:
+        have_symbols = db.execute("select symbol, sum(shares) as positive_shares from deals where user_id = :user_id group by symbol having positive_shares > 0", user_id=user_id)
+        return render_template("sell.html", have_symbols=have_symbols)
 
 
 def errorhandler(e):
