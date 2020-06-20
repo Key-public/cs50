@@ -40,22 +40,30 @@ if not os.environ.get("API_KEY"):
     raise RuntimeError("API_KEY not set")
 
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 @login_required
 def index():
-    """Show portfolio of stocks"""
-    user_id = session.get("user_id")
-    shares = db.execute("select symbol, company_name, sum(shares) as shares from deals where user_id = :user_id group by symbol", user_id=user_id)
-    cash = db.execute("select cash from users where id = :user_id", user_id=user_id)
-    cash = cash[0]["cash"]
-    total = cash
-    for share in shares:
-        share_prices = lookup(share["symbol"])
-        share_prices = share_prices["price"]
-        share.update({"share_price" : share_prices, "total_price" : share_prices * share["shares"]})
-        total = total + share["total_price"]
-        share["share_price"], share["total_price"] = usd(share["share_price"]), usd(share["total_price"])
-    return render_template("index.html", cash=usd(cash), total=usd(total), shares=shares)
+    if request.method == "POST":
+        if request.form.get("action") == "sell":
+            return sell()
+        elif request.form.get("action") == "buy":
+            return buy()
+        else:
+            return render_template("index.html", message="Ни BUY ни SELL")
+    else:
+        """Show portfolio of stocks"""
+        user_id = session.get("user_id")
+        shares = db.execute("select symbol, company_name, sum(shares) as shares from deals where user_id = :user_id group by symbol", user_id=user_id)
+        cash = db.execute("select cash from users where id = :user_id", user_id=user_id)
+        cash = cash[0]["cash"]
+        total = cash
+        for share in shares:
+            share_prices = lookup(share["symbol"])
+            share_prices = share_prices["price"]
+            share.update({"share_price" : share_prices, "total_price" : share_prices * share["shares"]})
+            total = total + share["total_price"]
+            share["share_price"], share["total_price"] = usd(share["share_price"]), usd(share["total_price"])
+        return render_template("index.html", cash=usd(cash), total=usd(total), shares=shares)
 
 
 @app.route("/buy", methods=["GET", "POST"])
@@ -70,7 +78,9 @@ def buy():
         symbol = result["symbol"]
         price = result["price"]
         if not result:
-            return render_template("buy.html", message="Sorry, there is no symbol like that")
+            return apology("Sorry, there is no symbol like that")
+        elif int(shares) <= 0:
+            return apology("You have to choose at least 1 stock")
         else:
             have_cash = db.execute("select cash from users where id = :id", id=user_id)
             have_cash = have_cash[0]["cash"]
@@ -80,7 +90,7 @@ def buy():
                 db.execute("update users set cash = :new_cash where id = :user", new_cash = have_cash - need_cash, user=user_id)
                 return render_template("buy.html", message="Congratulation!")
             else:
-                return render_template("buy.html", message="Sorry, you don't have enough cash for this deal")
+                return apology("Sorry, you don't have enough cash for this deal")
     else:
         return render_template("buy.html")
 
@@ -185,8 +195,10 @@ def sell():
     user_id = session.get("user_id")
     if request.method == "POST":
         symbol = request.form.get("symbol")
+        print(symbol)
         shares = request.form.get("shares")
-        if not symbol or not shares:
+        print(shares)
+        if not symbol or not shares or int(shares) <= 0:
             return apology("You have to choose at least 1 stock")
         shares = int(shares)
         have_shares = db.execute("select sum(shares) as shares from deals where user_id=:user_id and symbol=:symbol", user_id=user_id, symbol=symbol)[0]["shares"]

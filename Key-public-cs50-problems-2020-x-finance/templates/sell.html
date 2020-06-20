@@ -7,9 +7,7 @@
 {% block main %}
     {% if message: %}
         {{ message }}
-        <div>
-            <p><a href = "/sell">Ok, refresh page</a></p>
-        </div>
+        <p><a href = "/sell">Ok, refresh page</a></p>
     {% else: %}
         <form action="/sell" method="post">
             <div class="form-group">
@@ -21,8 +19,9 @@
                 </select>
             </div>
             <div calss="form-group">
-                <input autocomplete="off" autofocus class="form-control" name="shares" placeholder="# of shares to sell" type="integer">
+                <input autocomplete="off" autofocus class="form-control" name="shares" placeholder="#" type="number">
             </div>
+            <p></p>
             <button class="btn btn-primary" type="submit">Sell</button>
         </form>
     {% endif %}

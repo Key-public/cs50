@@ -7,9 +7,7 @@
 {% block main %}
     {% if message: %}
         {{ message }}
-        <div>
-            <p><a href = "/quote">Ok, refresh page</a></p>
-        </div>
+        <p><a href = "/quote">Ok, refresh page</a></p>
     {% else: %}
         <form action="/quote" method="post">
             <div class="form-group">
